@@ -1,0 +1,226 @@
+---
+title: "Data 205 Project Housing Violation"
+author: "David Williams"
+date: "9/25/2019"
+output: html_document
+---
+
+```[R Install package]
+
+#install.packages("readr")
+#install.packages("dplyr")
+#install.packages("lubridate")
+#install.packages("ggplot2")
+#install.packages("rapportools")
+#install.packages("plotly")
+
+```
+
+## Data Ingestion
+
+```{R   load package}
+
+library(readr)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(rapportools)
+library(plotly)
+
+```
+
+```{R read housing violation file}
+
+housing_vol <- 
+read_csv("c:/Users/dwilliams/documents/montgomery/data 205/Housing_Code_Violations.csv")
+
+## Exploratory
+
+View(housing_vol)
+
+str(housing_vol)
+
+```
+
+```{R rename variable and filter}
+
+## Data Wrangling 
+
+#Rename Column name with spaces to single column name
+
+housing_vol_rename <- rename(housing_vol,Inspection_Date="Inspection Date",Location_Description = "Location Description",Service_Request_Status = "Service Request Status")
+
+#Replace blank status to "Open"
+
+housing_vol_rename$Service_Request_Status[which(is.na(housing_vol_rename$Service_Request_Status))] = "Open"
+
+#Remove rows that contain NA in Corrected Date or Inpection Date
+
+housing_vol_clean <- filter(housing_vol_rename,as.character(Corrected) != "NA" & as.character(Inspection_Date) !="NA")
+
+View(housing_vol_clean)
+
+attach(housing_vol_clean)
+
+```
+
+```{R Date processing}
+
+#Subtract Corrected Date from Inpection Date - (xx Days)
+
+housing_vol_mutated <- mutate(housing_vol_clean,days_to_correct = as.Date(Corrected,"%m/%d/%Y",na.rm=True) - as.Date(Inspection_Date,"%m/%d/%Y",na.rm=True)) 
+
+#Subtract Corrected Date from Inpection Date - numeric
+
+housing_vol_mutated <- mutate(housing_vol_mutated,number_of_days = as.numeric(as.Date(Corrected,"%m/%d/%Y")) - as.numeric(as.Date(Inspection_Date,"%m/%d/%Y")))
+
+#Select
+
+housing_vol_final <-
+select(housing_vol_mutated,City,Inspection_Date,Corrected,days_to_correct,number_of_days)
+
+head(housing_vol_final)
+
+#Group by City
+
+housing_vol_final_group <- group_by(housing_vol_final,City)
+
+#Calculate mean days to correct by City
+
+housing_vol_summarize <- summarize(housing_vol_final_group,fix_mean=mean(number_of_days,na.rm=TRUE))
+
+#Calculate days to correct by City
+
+housing_vol_summarize_count <- summarize(housing_vol_final_group,violation_count=sum(number_of_days,na.rm=TRUE))
+
+View(housing_vol_summarize_count)
+
+#Group mean days into ranges
+
+time_to_fix <- 
+ifelse(
+(housing_vol_summarize$fix_mean > 0 & housing_vol_summarize$fix_mean <= 30), "0_to_30",ifelse((housing_vol_summarize$fix_mean > 30 & housing_vol_summarize$fix_mean <= 60),"31_to_60",
+ifelse((housing_vol_summarize$fix_mean > 60 & housing_vol_summarize$fix_mean <= 90),"61_to_90",
+ifelse((housing_vol_summarize$fix_mean > 90 & housing_vol_summarize$fix_mean <= 120),"91_to_120",ifelse((housing_vol_summarize$fix_mean > 120 & housing_vol_summarize$fix_mean <= 365),"121_to_365","greater_than_365")))))
+
+#Add column with ranges
+
+housing_vol_summarize <- mutate(housing_vol_summarize,Days_to_Repair = time_to_fix )
+    
+housing_vol_summarize 
+
+View(housing_vol_summarize)
+
+
+```
+
+```{R visulaization}
+
+#Scatter Point
+    
+ggplot(housing_vol_summarize,aes(Days_to_Repair,City))  + 
+      geom_point(aes(colour=Days_to_Repair)) +
+      xlab("Days to Repair") +
+      labs(colour="Days to Repair")  +
+      ggtitle("Mean Days to Correct Violations Group by City") +
+      theme(axis.title.x=element_text(colour="Green",size=20),
+            axis.title.y=element_text(colour="Blue",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="Red",size=30))
+            
+#Histogram  - mean by city
+            
+ggplot(housing_vol_summarize,aes(fix_mean)) +
+      geom_histogram(binwidth=10,aes(fill=City),colour="Black") +
+      xlab("Mean Days to Correct Violations") +
+      ylab("Count by City") +
+      ggtitle("Mean Days to Fix Violation by City")  +
+      theme(axis.title.x=element_text(colour="Green",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_text(size=2),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="Purple",size=30))
+            
+#Bar Plot - mean by city
+            
+ggplot(housing_vol_summarize,aes(x=City,y=fix_mean,fill=City)) +
+      geom_bar(stat="identity")   +
+      xlab("City") +
+      ylab("Mean Days to Correct Violations")  +
+      labs(fill="City")  +
+            ggtitle("Mean Days to Fix Violation by City")  +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_blank(),
+       #     axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+            
+#Bar Plot - count by city
+            
+ggplot(housing_vol_summarize_count,aes(x=City,y=violation_count,
+fill=City)) +
+      geom_bar(stat="identity")   +
+      xlab("City") +
+      ylab("Count of number of Correct Violations")  +
+      labs(fill="City")  +
+            ggtitle("Count of number of Violation by City")  +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_blank(),
+         #   axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+            
+            
+#bar  - Locations
+            
+ggplot(housing_vol_clean) +
+      geom_bar(mapping=aes(x=Location_Description,
+      fill=Location_Description)) +
+      xlab("City")  + coord_flip() +
+      ylab("Violation Location")  +
+      labs(fill="Location Description")  +
+            ggtitle("Location of Violation")   +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=15),
+      axis.text.y=element_blank(),
+            axis.title.y=element_text(colour="Red",size=10),
+            axis.text.x=element_text(size=2),
+         #   axis.text.y=element_text(size=2),
+            legend.title=element_text(size=2),
+            legend.text=element_text(size=6),
+            plot.title=element_text(colour="DarkBlue",size=15))
+
+ #bar - Servie Request
+  
+q <- ggplot(housing_vol_clean) +
+      geom_bar(mapping=aes(x=Service_Request_Status,
+      fill=Service_Request_Status)) +
+      xlab("Status")  +
+      ylab("Service Request")  +
+      labs(fill="Service Request Status") +
+            ggtitle("Service Request Status")   +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=10),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+            
+  q <- ggplotly(q)
+  
+  q
+            
+```
+            
+ 

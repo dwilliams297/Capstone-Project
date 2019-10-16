@@ -1,0 +1,367 @@
+---
+title: "Data 205 - ALE Demographics"
+author: "David Williams"
+date: "10/5/2019"
+output: html_document
+---
+
+#Install Packages
+
+```{R install packages}
+
+#install.packages("dplyr")
+#install.packages("ggplot2")
+#install.packages("ggthemes")
+#install.packages("plotly")
+
+```
+
+#Libraries
+
+```{R Library}
+
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(plotly)
+
+```
+
+#Read Data
+
+```{R read data}
+
+death_rates <-
+ read.csv("c:/Users/dwilliams/documents/montgomery/data 205/death_rates.csv")
+
+View(death_rates)
+
+head(death_rates)
+
+str(death_rates)
+
+```
+
+##Clean up the data
+
+#Change variable name to shorter names
+
+```{R change variable names}
+
+death_rates2 <-     rename(death_rates,
+                           avg_life        = Average.Life.Expectancy..Years.,
+                           age_adj         = Age.adjusted.Death.Rate)
+
+str(death_rates2)
+
+```
+
+#Remove rows with blank avg_life
+
+```{R remove rows with blank in avg_life column}
+
+death_rates3  <-  filter(death_rates2,avg_life != ' ') 
+
+View(death_rates3)
+
+str(death_rates3)
+
+```
+
+#Create nine datasets with the different demographics
+
+```{R Create both sex}
+
+death_rate_both_sex_all <- filter(death_rates3,Sex=="Both Sexes" & 
+                                               Race == "All Races")
+
+death_rate_both_sex_all <- mutate(death_rate_both_sex_all,mean_avg_life = mean(avg_life))
+
+str(death_rate_both_sex_all)
+
+summary(death_rate_both_sex_all)
+
+death_rate_both_sex_black <- filter(death_rates3,Sex=="Both Sexes" & Race == "Black")
+
+death_rate_both_sex_black <- mutate(death_rate_both_sex_black,mean_avg_life = mean(avg_life))
+
+summary(death_rate_both_sex_black)
+
+death_rate_both_sex_white <- filter(death_rates3,Sex=="Both Sexes" & Race == "White")
+
+death_rate_both_sex_white <- mutate(death_rate_both_sex_white,mean_avg_life = mean(avg_life))
+
+summary(death_rate_both_sex_white)
+
+```
+
+```{R Create  female}
+
+death_rate_female_all     <- filter(death_rates3,Sex=="Female" & 
+                                               Race == "All Races")
+
+death_rate_female_all <- mutate(death_rate_female_all,mean_avg_life = mean(avg_life))
+
+summary(death_rate_female_all)
+
+death_rate_female_black   <- filter(death_rates3,Sex=="Female" & 
+                                               Race == "Black")
+
+death_rate_female_black <- mutate(death_rate_female_black,mean_avg_life = mean(avg_life))
+
+summary(death_rate_female_black)
+
+death_rate_female_white    <- filter(death_rates3,Sex=="Female" & 
+                                                Race == "White")
+
+death_rate_female_white <- mutate(death_rate_female_white,mean_avg_life = mean(avg_life))
+
+summary(death_rate_female_white)
+
+```
+
+```{R Create  male}
+
+death_rate_male_all       <- filter(death_rates3,Sex=="Male" & 
+                                               Race == "All Races")
+
+death_rate_male_all <- mutate(death_rate_male_all,mean_avg_life = mean(avg_life))
+
+summary(death_rate_male_all)
+
+death_rate_male_black     <- filter(death_rates3,Sex=="Male" & 
+                                               Race == "Black")
+
+death_rate_male_black <- mutate(death_rate_male_black,mean_avg_life = mean(avg_life))
+
+summary(death_rate_male_black)
+
+death_rate_male_white      <- filter(death_rates3,Sex=="Male" & 
+                                                Race == "White")
+
+death_rate_male_white <- mutate(death_rate_male_white,mean_avg_life = mean(avg_life))
+
+summary(death_rate_male_white)
+
+```
+
+#Bar Chart
+
+```{R Bar chart by sex}
+
+death_rates_sex <- group_by(death_rates3,Sex)
+
+death_rates_sex <- mutate(death_rates_sex,mean_avg_life = mean(avg_life))
+
+q <- ggplot(data=death_rates_sex,aes(x=Sex,y=mean_avg_life,
+                                    fill=Sex)) +
+   geom_bar(stat="identity") +
+      ylab("") +
+      labs("Average Life Expectancy by Sex")  +
+           ggtitle("Average Life Expectancy")  +
+          labs(fill="Sex") +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+         #   axis.text.x=element_blank(),
+            axis.text.y=element_blank(),
+            #axis.text.x=element_text(size=10),
+            #axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+
+q <- ggplotly(q)
+
+q
+
+```
+
+
+```{R Bar chart by race}
+
+death_rates_race <- group_by(death_rates3,Race)
+
+death_rates_race <- mutate(death_rates_race,mean_avg_life = mean(avg_life))
+
+ q <- ggplot(data=death_rates_race,aes(x=Race,y=mean_avg_life,
+                                    fill=Race)) +
+   geom_bar(stat="identity") +
+      ylab("") +
+      labs("Average Life Expectancy by Race")  +
+           ggtitle("Average Life Expectancy")  +
+          labs(fill="Race") +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+         #   axis.text.x=element_blank(),
+            axis.text.y=element_blank(),
+            #axis.text.x=element_text(size=10),
+            #axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+
+q <- ggplotly(q)
+
+q
+
+```
+
+##Histograms
+
+#Histograms for both sexes
+
+```{R  histogram by both sexes and all race}
+
+q <- ggplot(death_rate_both_sex_all,aes(avg_life)) +
+geom_histogram(aes(fill='Average Life Expectancy')) +
+     ggtitle("Average Life Expectancy by both Sex and all Race") +
+  labs(title ="Average Life Expectancy by both Sex and all Race",
+       subtitle="Average Life Expectancy",
+       caption="Average Life Expectancy",x="Average Life Expectancy",y="Count") +
+       theme_economist()   +
+       scale_fill_manual(name=NULL, values='green')
+
+q <- ggplotly(q)
+
+q
+
+```
+
+```{R  histogram by both sexes and black}
+
+q <- ggplot(death_rate_both_sex_black,aes(avg_life)) +
+geom_histogram(aes(fill="Average Life Expectancy")) +
+     ggtitle("Average Life Expectancy by both Sex and Black") +
+  labs(title ="Average Life Expectancy by both Sex and Black",
+       subtitle="Average Life Expectancy",
+       caption="Average Life Expectancy",x="Average Life Expectancy",y="Count") +
+       theme_economist()   +
+       scale_fill_manual(name=NULL, values='red')
+
+q <- ggplotly(q)
+
+q
+
+```
+
+```{R  histogram by both sexes and white}
+
+q <- ggplot(death_rate_both_sex_white,aes(avg_life)) +
+geom_histogram(aes(fill='Average Life Expectancy')) +
+     ggtitle("Average Life Expectancy by both Sex and White") +
+  labs(title ="Average Life Expectancy by both Sex and White",
+       subtitle="Average Life Expectancy",
+       caption="Average Life Expectancy",x="Average Life Expectancy",y="Count") +
+       theme_economist()   +
+       scale_fill_manual(name=NULL, values='blue')
+
+q <- ggplotly(q)
+
+q
+
+```
+
+#Historgram for Female
+
+```{R  histogram by female and all race}
+
+q <- ggplot(death_rate_female_all,aes(avg_life)) +
+geom_histogram(aes(fill='Average Life Expectancy')) +
+     ggtitle("Average Life Expectancy by Female and all Race") +
+  labs(title ="Average Life Expectancy by Female and all Race",
+       subtitle="Average Life Expectancy",
+       caption="Average Life Expectancy",x="Average Life Expectancy",y="Count") +
+       theme_economist()   +
+       scale_fill_manual(name=NULL, values='purple')
+
+q <- ggplotly(q)
+
+q
+
+```
+
+```{R  histogram by female and black}
+
+q <- ggplot(death_rate_female_black,aes(avg_life)) +
+geom_histogram(aes(fill='Average Life Expectancy')) +
+     ggtitle("Average Life Expectancy by Female and Black") +
+  labs(title ="Average Life Expectancy by Female and Black",
+       subtitle="Average Life Expectancy",
+       caption="Average Life Expectancy",x="Average Life Expectancy",y="Count") +
+       theme_economist()   +
+       scale_fill_manual(name=NULL, values='green')
+
+q <- ggplotly(q)
+
+q
+
+```
+
+```{R  histogram by female and white}
+
+q <- ggplot(death_rate_female_white,aes(avg_life)) +
+geom_histogram(aes(fill='Average Life Expectancy')) +
+     ggtitle("Average Life Expectancy by Female and White") +
+  labs(title ="Average Life Expectancy by Female and White",
+       subtitle="Average Life Expectancy",
+       caption="Average Life Expectancy",x="Average Life Expectancy",y="Count") +
+       theme_economist()   +
+       scale_fill_manual(name=NULL, values='red')
+
+q <- ggplotly(q)
+
+q
+
+```
+#Historgram for male
+
+```{R  histogram by male and all race}
+
+q <- ggplot(death_rate_male_all,aes(avg_life)) +
+geom_histogram(aes(fill='Average Life Expectancy')) +
+     ggtitle("Average Life Expectancy by Male and all Race") +
+  labs(title ="Average Life Expectancy by Male and all Race",
+       subtitle="Average Life Expectancy",
+       caption="Average Life Expectancy",x="Average Life Expectancy",y="Count") +
+       theme_economist()   +
+       scale_fill_manual(name=NULL, values='blue')
+
+q <- ggplotly(q)
+
+q
+
+```
+
+```{R  histogram by male and black}
+
+q <- ggplot(death_rate_male_black,aes(avg_life)) +
+geom_histogram(aes(fill='Average Life Expectancy')) +
+     ggtitle("Average Life Expectancy by Male and Black") +
+  labs(title ="Average Life Expectancy by Male and Black",
+       subtitle="Average Life Expectancy",
+       caption="Average Life Expectancy",x="Average Life Expectancy",y="Count") +
+       theme_economist()   +
+       scale_fill_manual(name=NULL, values='red')
+
+q <- ggplotly(q)
+
+q
+
+```
+
+```{R  histogram by male and white}
+
+q <- ggplot(death_rate_male_white,aes(avg_life)) +
+geom_histogram(aes(fill='Average Life Expectancy')) +
+     ggtitle("Average Life Expectancy by Male and White") +
+  labs(title ="Average Life Expectancy by Male and White",
+       subtitle="Average Life Expectancy",
+       caption="Average Life Expectancy",x="Average Life Expectancy",y="Count") +
+       theme_economist()   +
+       scale_fill_manual(name=NULL, values='blue')
+
+q <- ggplotly(q)
+
+q
+
+```

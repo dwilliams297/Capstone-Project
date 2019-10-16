@@ -1,0 +1,170 @@
+---
+title: "Data 205 - airbag and seatbelt"
+author: "David Williams"
+date: "10/5/2019"
+output: html_document
+---
+
+
+```[R Install package]
+
+#install.packages("dplyr")
+#install.packages("readr")
+#install.packages("ggplot2")
+#install.packages("plotly")
+
+```
+
+```{R   load package}
+
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+
+```
+
+```{R read air bag file}
+
+airbag_data <- 
+read_csv("c:/Users/dwilliams/documents/montgomery/data 205/airbag_and_seatbelt.csv")
+
+attach(airbag_data)
+
+View(airbag_data)
+
+```
+
+#Create dataframe of the four possible outcomes
+
+```{R Create four dataframes}
+
+airbag_only <-  filter(airbag_data,airbag=="airbag" & seatbelt=="none")
+
+head(airbag_only)
+
+seatbelt_only <- filter(airbag_data,airbag=="none" & seatbelt=="belted")
+
+head(seatbelt_only)
+
+airbag_and_seatbelt <- filter(airbag_data,airbag=="airbag" & seatbelt=="belted")
+
+head(airbag_and_seatbelt)
+
+no_airbag_or_seatbelt <- filter(airbag_data,airbag=="none" & seatbelt=="none")
+
+head(no_airbag_or_seatbelt)
+
+```
+#Create single column with the four combinations
+
+```{R  Combine airbag column and seatbelt column}
+
+airbag_seatbelt_status <-
+
+ifelse((airbag == "airbag" & seatbelt == "none"),"airbag",
+ifelse((airbag == "none" & seatbelt == "belted"),"belted",
+ifelse((airbag == "none" & seatbelt == "none"),"none",
+ifelse((airbag == "airbag" & seatbelt == "belted"),"both","unknown"))))
+
+airbag_mutate <- mutate(airbag_data,airbag_seatbelt = airbag_seatbelt_status)
+
+View(airbag_mutate)
+
+```
+
+```{R visualization}
+
+contingencytable <- table(airbag_mutate$airbag_seatbelt,airbag_mutate$dead)
+
+contingencytable
+
+      ggplot(airbag_mutate,aes(x=airbag_seatbelt,y=dead, 
+            fill=dead)) +
+            geom_bar(stat="identity",position="fill")   +
+            xlab("Airbag, Seatbelt, Both or None") +
+            ylab("Alive or Dead") +
+      labs(fill="Dead or Alive")  +
+            ggtitle("Accident - Airbag and Seatbelt Status")  +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+            
+  
+q1 <- ggplot(airbag_only,aes(x=dead,fill=dead)) +
+            geom_bar(stat="count")   +
+            xlab("Dead or Alive") +
+            ylab("Airbag No Seatbelt")  +
+      labs(fill="Dead or Alive")  +
+            ggtitle("Accident - Airbag and no Seatbelt")  +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+            
+q1 <- ggplotly(q1)
+
+q1
+            
+q2 <- ggplot(seatbelt_only,aes(x=dead,fill=dead)) +
+             geom_bar(stat="count")   +
+             xlab("Dead or Alive") +
+             ylab("Seatbelt No Airbag")  +
+      labs(fill="Dead or Alive")  +
+            ggtitle("Accident - Seatbelt and no Airbag")  +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+            
+q2 <- ggplotly(q2)
+
+q2
+            
+q3 <- ggplot(airbag_and_seatbelt,aes(x=dead,fill=dead)) +
+              geom_bar(stat="count")   +
+              xlab("Dead or Alive") +
+              ylab("Airbag and Seatbelt")  +
+      labs(fill="Dead or Alive")  +
+            ggtitle("Accident - Airbag and Seatbelt")  +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+            
+q3 <- ggplotly(q3)
+
+q3
+            
+q4 <- ggplot(no_airbag_or_seatbelt,aes(x=dead,fill=dead)) +
+              geom_bar(stat="count")   +
+              xlab("Dead or Alive") +
+               ylab("No Airbag or Seatbelt")  +
+      labs(fill="Dead or Alive")  +
+            ggtitle("Accident - No Airbag or Seatbelt")  +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+            
+q4 <- ggplotly(q4)
+
+q4
+            
+```

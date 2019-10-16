@@ -1,0 +1,85 @@
+---
+title: Data 205 - Montgomery College Enrollment
+author: "David Williams"
+date: "9/29/2019"
+output: html_document
+---
+
+```[R Install package]
+
+#install.packages("dplyr")
+#install.packages("readr")
+#install.packages("ggplot2")
+
+```
+
+```{R   load package}
+
+
+library(dplyr)
+library(readr)
+library(ggplot2)
+
+```
+
+```{R read montgomery college file}
+
+enrollment <- 
+read_csv("c:/Users/dwilliams/documents/montgomery/data 205/Montgomery_College_Enrollment_Data.csv")
+
+attach(enrollment)
+
+```
+```{R rename columns}
+
+enrollment_rename <- rename(enrollment,Age_Group="Age Group",
+                          Germantown ="Attending Germantown",
+                          Rockville = "Attending Rockville",
+                          Takoma    = "Attending Takoma Park/SS")
+                          
+
+```
+```{R Create new column}
+
+
+enrollment_location <- 
+ifelse(enrollment_rename$Germantown == "Yes",'Germantown',ifelse (enrollment_rename$Rockville == "Yes", 'Rockville',ifelse (enrollment_rename$Takoma == "Yes","Takoma","Unknown")))
+
+enrollment_mutate <- mutate(enrollment_rename,campus =     enrollment_location )
+
+```
+```{R Visualization}
+
+#Enrollment by age group
+
+ggplot(data=enrollment_mutate) +
+      geom_bar(mapping=aes(x=Age_Group,fill=Age_Group))  +
+      xlab("Age Group") +
+      ylab("Number Enrolled")  +
+      labs(fill="Age Group")  +
+            ggtitle("Enrollment by Age Group")  +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+            
+#Pie enrollment by Campus
+            
+ggplot(data=enrollment_mutate) +
+      geom_bar(mapping=aes(x=campus,fill=campus))  +
+      xlab("Campus") +
+      ylab("Number Enrolled")  + coord_polar("x",start=0,clip="off") +
+      labs(fill="Campus") +
+            ggtitle("Enrollment by Campus")  +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+         
+```
