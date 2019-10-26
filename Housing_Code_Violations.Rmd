@@ -5,7 +5,13 @@ date: "9/25/2019"
 output: html_document
 ---
 
-```[R Install package]
+The data for this program comes from the Montogmery County web
+Site.  The purpose of this program is to visualize:
+1. The number of day to make repairs by city in Montogmery
+County 2. The number of Violations by city  3. The location of 
+of most violations 4. The current status of violations
+
+```{R Install package}
 
 #install.packages("readr")
 #install.packages("dplyr")
@@ -31,32 +37,55 @@ library(plotly)
 
 ```{R read housing violation file}
 
-housing_vol <- 
-read_csv("c:/Users/dwilliams/documents/montgomery/data 205/Housing_Code_Violations.csv")
+#housing_vol <- 
+#read_csv("c:/Users/dwilliams/documents/montgomery/data #205/Housing_Code_Violations.csv")
 
-## Exploratory
+# Data ingestion. The data is coming from the Montogmery County
+# website
+
+housing_vol <- 
+read_csv(url("https://data.montgomerycountymd.gov/resource/k9nj-z35d.csv"))
+
+```
+
+## Exploratory - View the data and variable names and structure
+
+```{R view the dataframe}
 
 View(housing_vol)
+
+head(housing_vol)
 
 str(housing_vol)
 
 ```
 
+## Data Wrangling
+
 ```{R rename variable and filter}
 
-## Data Wrangling 
 
 #Rename Column name with spaces to single column name
 
-housing_vol_rename <- rename(housing_vol,Inspection_Date="Inspection Date",Location_Description = "Location Description",Service_Request_Status = "Service Request Status")
+####  only needed if reading from csv file
+
+#housing_vol_rename <- #rename(housing_vol,Inspection_Date="Inspection #Date",Location_Description = "Location #Description",Service_Request_Status = "Service Request Status")
+
+
+housing_vol_rename <- housing_vol
+
+View(housing_vol_rename)
 
 #Replace blank status to "Open"
 
-housing_vol_rename$Service_Request_Status[which(is.na(housing_vol_rename$Service_Request_Status))] = "Open"
+housing_vol_rename$service_request_status[which(is.na(housing_vol_rename$service_request_status))] = "Open"
+
+View(housing_vol_rename)
 
 #Remove rows that contain NA in Corrected Date or Inpection Date
 
-housing_vol_clean <- filter(housing_vol_rename,as.character(Corrected) != "NA" & as.character(Inspection_Date) !="NA")
+housing_vol_clean <- subset(housing_vol_rename,as.character(corrected) != "NA" & as.character(inspection_date) !="NA")
+
 
 View(housing_vol_clean)
 
@@ -68,22 +97,28 @@ attach(housing_vol_clean)
 
 #Subtract Corrected Date from Inpection Date - (xx Days)
 
-housing_vol_mutated <- mutate(housing_vol_clean,days_to_correct = as.Date(Corrected,"%m/%d/%Y",na.rm=True) - as.Date(Inspection_Date,"%m/%d/%Y",na.rm=True)) 
+housing_vol_mutated <- mutate(housing_vol_clean,days_to_correct = as.Date(corrected,"%m/%d/%Y",na.rm=True) - as.Date(inspection_date,"%m/%d/%Y",na.rm=True)) 
 
 #Subtract Corrected Date from Inpection Date - numeric
 
-housing_vol_mutated <- mutate(housing_vol_mutated,number_of_days = as.numeric(as.Date(Corrected,"%m/%d/%Y")) - as.numeric(as.Date(Inspection_Date,"%m/%d/%Y")))
+housing_vol_mutated <- mutate(housing_vol_mutated,number_of_days = as.numeric(as.Date(corrected,"%m/%d/%Y")) - as.numeric(as.Date(inspection_date,"%m/%d/%Y")))
 
-#Select
+#Select only the columns that will be used further
 
 housing_vol_final <-
-select(housing_vol_mutated,City,Inspection_Date,Corrected,days_to_correct,number_of_days)
+select(housing_vol_mutated,city,inspection_date,corrected,days_to_correct,number_of_days)
 
 head(housing_vol_final)
 
+```
+
+## Statistical Analysis
+
+```{R group data and get mean}
+
 #Group by City
 
-housing_vol_final_group <- group_by(housing_vol_final,City)
+housing_vol_final_group <- group_by(housing_vol_final,city)
 
 #Calculate mean days to correct by City
 
@@ -95,7 +130,7 @@ housing_vol_summarize_count <- summarize(housing_vol_final_group,violation_count
 
 View(housing_vol_summarize_count)
 
-#Group mean days into ranges
+#Group mean days into ranges group of date range
 
 time_to_fix <- 
 ifelse(
@@ -103,7 +138,7 @@ ifelse(
 ifelse((housing_vol_summarize$fix_mean > 60 & housing_vol_summarize$fix_mean <= 90),"61_to_90",
 ifelse((housing_vol_summarize$fix_mean > 90 & housing_vol_summarize$fix_mean <= 120),"91_to_120",ifelse((housing_vol_summarize$fix_mean > 120 & housing_vol_summarize$fix_mean <= 365),"121_to_365","greater_than_365")))))
 
-#Add column with ranges
+#Add column with ranges to dataframe
 
 housing_vol_summarize <- mutate(housing_vol_summarize,Days_to_Repair = time_to_fix )
     
@@ -114,11 +149,13 @@ View(housing_vol_summarize)
 
 ```
 
+## Data Visualization
+
 ```{R visulaization}
 
 #Scatter Point
     
-ggplot(housing_vol_summarize,aes(Days_to_Repair,City))  + 
+ggplot(housing_vol_summarize,aes(Days_to_Repair,city))  + 
       geom_point(aes(colour=Days_to_Repair)) +
       xlab("Days to Repair") +
       labs(colour="Days to Repair")  +
@@ -134,7 +171,7 @@ ggplot(housing_vol_summarize,aes(Days_to_Repair,City))  +
 #Histogram  - mean by city
             
 ggplot(housing_vol_summarize,aes(fix_mean)) +
-      geom_histogram(binwidth=10,aes(fill=City),colour="Black") +
+      geom_histogram(binwidth=10,aes(fill=city),colour="Black") +
       xlab("Mean Days to Correct Violations") +
       ylab("Count by City") +
       ggtitle("Mean Days to Fix Violation by City")  +
@@ -148,7 +185,7 @@ ggplot(housing_vol_summarize,aes(fix_mean)) +
             
 #Bar Plot - mean by city
             
-ggplot(housing_vol_summarize,aes(x=City,y=fix_mean,fill=City)) +
+ggplot(housing_vol_summarize,aes(x=city,y=fix_mean,fill=city)) +
       geom_bar(stat="identity")   +
       xlab("City") +
       ylab("Mean Days to Correct Violations")  +
@@ -165,8 +202,8 @@ ggplot(housing_vol_summarize,aes(x=City,y=fix_mean,fill=City)) +
             
 #Bar Plot - count by city
             
-ggplot(housing_vol_summarize_count,aes(x=City,y=violation_count,
-fill=City)) +
+ggplot(housing_vol_summarize_count,aes(x=city,y=violation_count,
+fill=city)) +
       geom_bar(stat="identity")   +
       xlab("City") +
       ylab("Count of number of Correct Violations")  +
@@ -185,8 +222,8 @@ fill=City)) +
 #bar  - Locations
             
 ggplot(housing_vol_clean) +
-      geom_bar(mapping=aes(x=Location_Description,
-      fill=Location_Description)) +
+      geom_bar(mapping=aes(x=location_description,
+      fill=location_description)) +
       xlab("City")  + coord_flip() +
       ylab("Violation Location")  +
       labs(fill="Location Description")  +
@@ -203,8 +240,8 @@ ggplot(housing_vol_clean) +
  #bar - Servie Request
   
 q <- ggplot(housing_vol_clean) +
-      geom_bar(mapping=aes(x=Service_Request_Status,
-      fill=Service_Request_Status)) +
+      geom_bar(mapping=aes(x=service_request_status,
+      fill=service_request_status)) +
       xlab("Status")  +
       ylab("Service Request")  +
       labs(fill="Service Request Status") +

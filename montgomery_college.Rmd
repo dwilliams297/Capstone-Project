@@ -5,13 +5,22 @@ date: "9/29/2019"
 output: html_document
 ---
 
-```[R Install package]
+This is a dataset from the Montgomery County website
+The purpose of this program is to visualize the enrollment
+Of Montgomery College by 1. Age Group and 2. Campus
+
+# This is no Statistical analysis done to this data
+
+
+```{R Install package}
 
 #install.packages("dplyr")
 #install.packages("readr")
 #install.packages("ggplot2")
 
 ```
+
+## Data Ingestion
 
 ```{R   load package}
 
@@ -24,23 +33,42 @@ library(ggplot2)
 
 ```{R read montgomery college file}
 
-enrollment <- 
-read_csv("c:/Users/dwilliams/documents/montgomery/data 205/Montgomery_College_Enrollment_Data.csv")
+#enrollment <- 
+#read_csv("c:/Users/dwilliams/documents/montgomery/data #205/Montgomery_College_Enrollment_Data.csv")
+
+enrollment <-
+
+read_csv(url("https://data.montgomerycountymd.gov/resource/wmr2-6hn6.csv"))
+
+```
+
+## Exploratory
+
+```{R view the data}
+
+View(enrollment)
+
+head(enrollment)
+
+str(enrollment)
 
 attach(enrollment)
 
 ```
+
+## Data Wrangling
+
 ```{R rename columns}
 
-enrollment_rename <- rename(enrollment,Age_Group="Age Group",
-                          Germantown ="Attending Germantown",
-                          Rockville = "Attending Rockville",
-                          Takoma    = "Attending Takoma Park/SS")
+enrollment_rename <- rename(enrollment,Age_Group="age_group",
+                          Germantown ="attending_germantown",
+                          Rockville = "attending_rockville",
+                          Takoma    = "attending_takoma_park_ss")
                           
 
 ```
-```{R Create new column}
 
+```{R Create new column}
 
 enrollment_location <- 
 ifelse(enrollment_rename$Germantown == "Yes",'Germantown',ifelse (enrollment_rename$Rockville == "Yes", 'Rockville',ifelse (enrollment_rename$Takoma == "Yes","Takoma","Unknown")))
@@ -48,6 +76,8 @@ ifelse(enrollment_rename$Germantown == "Yes",'Germantown',ifelse (enrollment_ren
 enrollment_mutate <- mutate(enrollment_rename,campus =     enrollment_location )
 
 ```
+## Data Visualization
+
 ```{R Visualization}
 
 #Enrollment by age group

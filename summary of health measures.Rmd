@@ -6,6 +6,11 @@ output:
   html_document: default
   word_document: default
 ---
+
+This data is coming from the data.gove website and is a summary
+of health indicators. This program has visualization of 
+comparision of mean life expectancy base of location in county, state and the United States
+
 ---
  ## Install packages
   
@@ -19,7 +24,7 @@ output:
 
 ``` 
 
-## load library
+## Data Ingestion
 
 ```{R load library}
 
@@ -37,15 +42,35 @@ library(plotly)
  health_measures <- 
 read_csv("c:/Users/dwilliams/documents/montgomery/data 205/summarymeasureofhealth.csv")
 
+```
+
+## Exploratory
+
+```{R view the data}
+
+View(health_measures)
+
+head(health_measures)
+
 str(health_measures)
 
-select (health_measures,CHSI_County_Name,CHSI_State_Name, ALE, US_ALE)
+```
+
+## Data Wrangling
+
+```{R transform data}
+
+#Select only columns needed
+
+select (health_measures,CHSI_County_Name,CHSI_State_Name, ALE)
 
 #remove bad data
 
 ## bad rows
 
 filter(health_measures, ALE < 60 | ALE > 100)
+
+View(health_measures)
 
 health_measures <- filter(health_measures, ALE >= 60 & ALE <= 100)
 
@@ -54,18 +79,22 @@ attach(health_measures)
 View(health_measures)
 
 ```
+## Statistical Analysis
+
 ## Part I  Data at State level
 
-## Group by State
+## Group by State  
 
-```{R group by state}
+```{R group by State}
+
+# Determine Montgomery County ALE
 
 montgomery_county_health_measures <- filter(health_measures,(CHSI_County_Name == "Montgomery" &
                         CHSI_State_Name == "Maryland"))
 
-# Montgomery County ALE
 montgomery_county_health_measures$ALE
 
+# group by state
 
 health_by_state <- group_by(health_measures,State_FIPS_Code,CHSI_State_Abbr)
 
@@ -75,6 +104,8 @@ sum_by_state <- summarize(health_by_state,mean_by_state = mean(ALE, na.rm=TRUE),
 View(select (sum_by_state,State_FIPS_Code,CHSI_State_Abbr,mean_by_state,median_by_state))
 
 ```
+
+## Statistical Analysis & Data Visualization
 
 #  Create frequency of each of the mean of ALE at state level
 
@@ -132,7 +163,7 @@ q
 
 ## Part II Data at county level
 
-# Visualization at county level
+## Data Visualization at county level
 
 ```{R Visualization at county} 
 
@@ -158,7 +189,7 @@ q
 
 ```
 
-# get high and low ALE
+# Get high and low ALE
 
 ```{R get high and low ALE}
 

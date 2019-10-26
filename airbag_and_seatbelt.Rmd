@@ -5,8 +5,15 @@ date: "10/5/2019"
 output: html_document
 ---
 
+This data is coming from the Kaggle website.  The data is a
+summary of the deaths of motor vehicle based on speed, age of driver, it the accident was head-on, weight of the vehicles, driver or passenger, and other statistics.  
 
-```[R Install package]
+This program will concentrate death rate if the occupant was using a seatbelt, had airbags,neither seatbelt or airbags, or using both seatbelt and airbags
+
+## There is no Statistical Analysis for this program
+
+
+```{R Install package}
 
 #install.packages("dplyr")
 #install.packages("readr")
@@ -14,6 +21,8 @@ output: html_document
 #install.packages("plotly")
 
 ```
+
+## Data Ingestion
 
 ```{R   load package}
 
@@ -29,13 +38,25 @@ library(plotly)
 airbag_data <- 
 read_csv("c:/Users/dwilliams/documents/montgomery/data 205/airbag_and_seatbelt.csv")
 
+```
+
+## Exploratory
+
+```{R View the data}
+
 attach(airbag_data)
 
 View(airbag_data)
 
+head(airbag_data)
+
+str(airbag_data)
+
 ```
 
-#Create dataframe of the four possible outcomes
+## Data Wranging
+
+##Create dataframe of the four possible outcomes
 
 ```{R Create four dataframes}
 
@@ -72,6 +93,8 @@ airbag_mutate <- mutate(airbag_data,airbag_seatbelt = airbag_seatbelt_status)
 View(airbag_mutate)
 
 ```
+
+## Data Visualization
 
 ```{R visualization}
 

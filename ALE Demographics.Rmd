@@ -5,6 +5,8 @@ date: "10/5/2019"
 output: html_document
 ---
 
+This data come from data.gov website and has the Average Life Expectancy by demographic of sex and race
+
 #Install Packages
 
 ```{R install packages}
@@ -15,6 +17,8 @@ output: html_document
 #install.packages("plotly")
 
 ```
+
+## Data Ingestion
 
 #Libraries
 
@@ -34,6 +38,12 @@ library(plotly)
 death_rates <-
  read.csv("c:/Users/dwilliams/documents/montgomery/data 205/death_rates.csv")
 
+```
+
+## Exploratory
+
+```{R view data}
+
 View(death_rates)
 
 head(death_rates)
@@ -41,6 +51,8 @@ head(death_rates)
 str(death_rates)
 
 ```
+
+## Data Wragling
 
 ##Clean up the data
 
@@ -68,9 +80,20 @@ str(death_rates3)
 
 ```
 
+## Statistical Analysis
+
 #Create nine datasets with the different demographics
 
 ```{R Create both sex}
+
+death_rate_male_female  <- filter(death_rates3,Sex=="Male" | 
+                                               Sex == "Female")
+
+death_rate_male_female <- group_by(death_rate_male_female,Sex)
+
+death_rate_male_female <- mutate(death_rate_male_female,mean_avg_life = mean(avg_life))
+
+summary(death_rate_male_female)
 
 death_rate_both_sex_all <- filter(death_rates3,Sex=="Both Sexes" & 
                                                Race == "All Races")
@@ -145,7 +168,37 @@ summary(death_rate_male_white)
 
 ```
 
+## Data Visualization
+
 #Bar Chart
+
+```{R Bar chart}
+
+q <- ggplot(data=death_rate_male_female,
+            aes(x=Sex,y=mean_avg_life,
+                                    fill=Sex)) +
+   geom_bar(stat="identity") +
+      ylab("") +
+      labs("Average Life Expectancy by Sex")  +
+           ggtitle("Average Life Expectancy")  +
+          labs(fill="Sex") +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+         #   axis.text.x=element_blank(),
+            axis.text.y=element_blank(),
+            #axis.text.x=element_text(size=10),
+            #axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+
+q <- ggplotly(q)
+
+q
+
+```
+
+
 
 ```{R Bar chart by sex}
 
