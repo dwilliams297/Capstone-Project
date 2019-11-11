@@ -9,8 +9,6 @@ This is a dataset from the Montgomery County website
 The purpose of this program is to visualize the enrollment
 Of Montgomery College by 1. Age Group and 2. Campus
 
-# This is no Statistical analysis done to this data
-
 
 ```{R Install package}
 
@@ -28,6 +26,7 @@ Of Montgomery College by 1. Age Group and 2. Campus
 library(dplyr)
 library(readr)
 library(ggplot2)
+library(tidyverse)
 
 ```
 
@@ -75,6 +74,60 @@ ifelse(enrollment_rename$Germantown == "Yes",'Germantown',ifelse (enrollment_ren
 
 enrollment_mutate <- mutate(enrollment_rename,campus =     enrollment_location )
 
+head(enrollment_mutate)
+
+```
+
+## Statistical analysis 
+
+```{R summary by campus}
+
+#  group by number of enrollment per campus
+
+enrollment_group_by_campus <- group_by(enrollment_mutate,campus)
+
+View(enrollment_group_by_campus)
+
+enrollment_count_by_campus <- summarize(enrollment_group_by_campus,count_each_campus = n())
+
+View(enrollment_count_by_campus)
+
+#  group by number of enrollement per campus and age  
+
+enrollment_group_by_campus_age <- group_by(enrollment_mutate,campus,Age_Group)
+
+View(enrollment_group_by_campus_age)
+
+enrollment_count_by_campus_age <- summarize(enrollment_group_by_campus_age,
+                  count_each_campus_age = n())
+
+View(enrollment_count_by_campus_age)
+
+#  group by number of enrollement per campus and gender 
+
+enrollment_group_by_campus_gender <- group_by(enrollment_mutate,campus,gender)
+
+
+View(enrollment_group_by_campus_gender)
+
+enrollment_count_by_campus_gender <- summarize(enrollment_group_by_campus_gender,
+                  count_each_campus_gender = n())
+
+View(enrollment_count_by_campus_gender)
+
+#  group by number of enrollement per campus and race  
+
+enrollment_group_by_campus_race <- group_by(enrollment_mutate,campus,race)
+
+
+View(enrollment_group_by_campus_race)
+
+enrollment_count_by_campus_race <- summarize(enrollment_group_by_campus_race,
+                  count_each_campus_race = n())
+
+View(enrollment_count_by_campus_race)
+
+
 ```
 ## Data Visualization
 
@@ -96,12 +149,14 @@ ggplot(data=enrollment_mutate) +
             legend.text=element_text(size=10),
             plot.title=element_text(colour="DarkBlue",size=30))
             
-#Pie enrollment by Campus
+#bar enrollment by Campus
             
-ggplot(data=enrollment_mutate) +
-      geom_bar(mapping=aes(x=campus,fill=campus))  +
+ggplot(data=enrollment_count_by_campus,
+       mapping=aes(x=campus,y=count_each_campus,
+                           fill=campus)) +
+      geom_bar(stat="identity")  +
       xlab("Campus") +
-      ylab("Number Enrolled")  + coord_polar("x",start=0,clip="off") +
+      ylab("Number Enrolled")  +
       labs(fill="Campus") +
             ggtitle("Enrollment by Campus")  +
       theme(axis.title.x=element_text(colour="Darkgreen",size=20),
@@ -111,5 +166,60 @@ ggplot(data=enrollment_mutate) +
             legend.title=element_text(size=20),
             legend.text=element_text(size=10),
             plot.title=element_text(colour="DarkBlue",size=30))
+
+#bar enrollment by Campus and age
+            
+ggplot(data=enrollment_count_by_campus_age,
+       mapping=aes(x=campus,y=count_each_campus_age,
+                           fill=Age_Group)) +
+      geom_bar(stat="identity")  +
+      xlab("Campus") +
+      ylab("Number Enrolled")  +
+      labs(fill="Age Group") +
+            ggtitle("Enrollment by Campus and Age")  +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+
+#bar enrollment by Campus and gender
+            
+ggplot(data=enrollment_count_by_campus_gender,
+       mapping=aes(x=campus,y=count_each_campus_gender,
+                           fill=gender)) +
+      geom_bar(stat="identity")  +
+      xlab("Campus") +
+      ylab("Number Enrolled")  +
+      labs(fill="gender") +
+            ggtitle("Enrollment by Campus and Gender")  +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+
+#bar enrollment by Campus and race
+            
+ggplot(data=enrollment_count_by_campus_race,
+       mapping=aes(x=campus,y=count_each_campus_race,
+                           fill=race)) +
+      geom_bar(stat="identity")  +
+      xlab("Campus") +
+      ylab("Number Enrolled")  +
+      labs(fill="race") +
+            ggtitle("Enrollment by Campus and Race")  +
+      theme(axis.title.x=element_text(colour="Darkgreen",size=20),
+            axis.title.y=element_text(colour="Red",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="DarkBlue",size=30))
+   
          
 ```

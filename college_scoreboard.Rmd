@@ -1,0 +1,247 @@
+---
+title: "Data 205 College Scoreboard"
+author: "David Williams"
+date: "10/1/2019"
+output: html_document
+---
+
+
+```{R   load package}
+
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(caTools)
+
+```
+
+```{R read montgomery college file}
+
+scoreboard <- 
+read_csv("c:/Users/dwilliams/documents/montgomery/data 205/college_scoreboard.csv")
+
+attach(scoreboard)
+
+View(scoreboard)
+
+```
+
+```{R Clean}
+
+
+scoreboard_group <- group_by(scoreboard,tier)
+
+
+scoreboard_mean <- summarize(scoreboard_group,mean_earning=
+                   mean(scorecard_median_earnings_2011,na.rm=TRUE))
+                   
+tier_description <-
+
+ifelse((scoreboard_mean$tier == '1'),"Ivy Plus",
+ifelse((scoreboard_mean$tier == '2'),"Other elite schools (public and private)",
+ifelse((scoreboard_mean$tier == '3'),"Highly selective public",
+ifelse((scoreboard_mean$tier == '4'),"Highly selective private",
+ifelse((scoreboard_mean$tier == '5'),"Selective public",
+ifelse((scoreboard_mean$tier == '6'),"Selective private",
+ifelse((scoreboard_mean$tier == '7'),"Nonselective 4-year public",
+ifelse((scoreboard_mean$tier == '8'),"Nonselective 4-year private not-for-profit",
+ifelse((scoreboard_mean$tier == '9'),"Two-year (public and private not-for-profit)",
+ifelse((scoreboard_mean$tier == '10'),"Four-year for-profit",
+ifelse((scoreboard_mean$tier == '11'),"Two-year for-profit",
+ifelse((scoreboard_mean$tier == '12'),"Less than two year schools of any type",
+ifelse((scoreboard_mean$tier == '13'),"Attending college with insufficient data",
+ifelse((scoreboard_mean$tier == '14'),"Not in college between the ages of 19-22","Unknown"))))))))))))))
+
+scoreboard_mutate <- mutate(scoreboard_mean,tier_desc=tier_description)
+                   
+
+```
+
+## Statistical Analysis
+
+```{R Statistical Analysis}
+
+# reduce the columns that are only needed
+
+scoreboard_to_grad <- select(scoreboard,grad_rate_150_p_2013,sticker_price_2013,
+                                        avgfacsal_2013, sat_avg_2013)
+                                      
+# remove any of the rows that don't have data in all the needed columns                                        
+scoreboard_to_grad <- filter(scoreboard_to_grad,grad_rate_150_p_2013 != 'NA' &
+                                                sticker_price_2013   != 'NA' &
+                                                avgfacsal_2013       != 'NA' &
+                                                sat_avg_2013         != 'NA')
+
+# Multiple the percert by 100 for better visualzation
+
+scoreboard_to_grad <- mutate(scoreboard_to_grad,grad_rate = grad_rate_150_p_2013 * 100 )
+
+# The salary looked like a monthly salary - multipled by 12
+
+scoreboard_to_grad <- mutate(scoreboard_to_grad,salary = avgfacsal_2013 * 12 )
+
+#  Grouped the tuition cost into range to reduce bars in graph
+
+sticker_price <- 
+ifelse(
+(scoreboard_to_grad$sticker_price_2013 > 5000 & scoreboard_to_grad$sticker_price_2013 <= 10000), "5K_to_10K",ifelse((scoreboard_to_grad$sticker_price_2013 > 10000 & scoreboard_to_grad$sticker_price_2013 <= 20000),"10K_to_20K",
+ifelse((scoreboard_to_grad$sticker_price_2013 > 20000 & scoreboard_to_grad$sticker_price_2013 <= 30000),"20K_to_30k",
+ifelse((scoreboard_to_grad$sticker_price_2013 > 30000 & scoreboard_to_grad$sticker_price_2013 <= 40000),"30K_to_40K",ifelse((scoreboard_to_grad$sticker_price_2013 >  40000 & scoreboard_to_grad$sticker_price_2013 <= 50000),"40K_to_50K","greater_than_50K")))))
+
+#Add column with ranges to dataframe
+
+scoreboard_to_grad <- mutate(scoreboard_to_grad,college_cost = sticker_price )
+
+#  Grouped the faculty salary into range to reduce bars in graph
+
+faculty_sal <- 
+ifelse(
+(scoreboard_to_grad$salary > 50000 & scoreboard_to_grad$salary <= 60000), "50K_to_60K",ifelse((scoreboard_to_grad$salary > 60000 & scoreboard_to_grad$salary <= 70000),"60K_to_70K",
+ifelse((scoreboard_to_grad$salary > 70000 & scoreboard_to_grad$salary <= 80000),"70K_to_80K",
+ifelse((scoreboard_to_grad$salary > 80000 & scoreboard_to_grad$salary <= 90000),"80K_to_90K",ifelse((scoreboard_to_grad$salary >  90000 & scoreboard_to_grad$salary <= 100000),"90K_to_100K","greater_than_100K")))))
+
+#Add column with ranges to dataframe
+
+scoreboard_to_grad <- mutate(scoreboard_to_grad,faculty_salary = faculty_sal )
+
+```
+
+## Create a linear Regression model to create a predictor 
+
+```{R Machine Learning}
+
+# Splitting the dataset into the Training set (80%) and Test set (20%)
+
+split        <-  sample.split(scoreboard_to_grad$grad_rate_150_p_2013, 
+                               SplitRatio = 0.8)
+training_set <-  subset(scoreboard_to_grad, split == TRUE)
+test_set     <-  subset(scoreboard_to_grad, split == FALSE)
+
+```
+
+## Simple Regression
+
+```{R fit simple regressors}
+
+
+# Fitting Simple Linear Regression to the Training set
+
+regressor <- lm(formula = grad_rate_150_p_2013 ~  sticker_price_2013 +
+                                                  salary             +
+                                                  sat_avg_2013,
+                                                  
+                         data = training_set)
+
+#regressor summary
+  
+summary(regressor)
+
+# Level of Confidence
+
+confint(regressor,conf.level=0.95)
+
+# Predicting the Test set results
+
+y_pred <- predict(regressor, newdata = test_set)
+
+## Actual values from test dataset
+
+table(test_set[1:10,1])
+
+## Predicted values
+
+table(y_pred[1:10])
+
+
+```
+
+## Chi-square test
+
+```{R Chi-square test}
+
+observer <- sum(y_pred)
+
+expected <- sum(test_set[,1])
+
+chi_square <- ((observer - expected) * (observer - expected)) / expected
+
+chi_square
+
+``` 
+
+## Visualizations
+
+```{R Visualization}
+
+#  The mean salary of student 10 years after graduation by type of school
+#  This has been changed to Tableau and will not come from R in project
+
+ggplot(scoreboard_mutate,aes(y=tier_desc,
+      x=mean_earning,fill=mean_earning))  + 
+      labs(fill="Mean Earning")  +  
+      geom_bar(stat="identity")  +
+      scale_fill_gradient(low="green",high="red") +
+      ylab("Tier") +
+      xlab("Mean Earnings") +
+      ggtitle("Mean Earning per Tier") +
+      theme(axis.title.x=element_text(colour="Green",size=20),
+            axis.title.y=element_text(colour="Blue",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="Red",size=30))
+            
+# Graduaion Rate by tuition cost
+    
+ggplot(scoreboard_to_grad,mapping=aes(y=college_cost,
+      x=grad_rate,fill=college_cost) ) + 
+      labs(fill="Tuition Cost")  +  
+      geom_bar(stat="identity",width=5)  +
+      ylab("Tuition Cost") +
+      xlab("Graduation Rate") +
+      ggtitle("Graduation Rate by Tuition Cost") +
+      theme(axis.title.x=element_text(colour="Green",size=20),
+            axis.title.y=element_text(colour="Blue",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="Red",size=30))
+            
+# bar chart of graduation rate base on Faculty Salary
+            
+ggplot(scoreboard_to_grad,mapping=aes(y=faculty_salary,
+      x=grad_rate,fill=faculty_salary) ) + 
+      labs(fill="Faculty Salary")  +  
+      geom_bar(stat="identity",width=5)  +
+      ylab("Faculty Salary") +
+      xlab("Graduation Rate") +
+      ggtitle("Graduation Rate by Faculty Salary") +
+      theme(axis.title.x=element_text(colour="Green",size=20),
+            axis.title.y=element_text(colour="Blue",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="Red",size=30))
+            
+# bar chart of graduation rate base on sat score
+            
+ggplot(scoreboard_to_grad,mapping=aes(y=sat_avg_2013,
+      x=grad_rate,fill=sat_avg_2013) ) + 
+      labs(fill="SAT Score")  +  
+      geom_bar(stat="identity",width=5)  +
+      ylab("SAT Score") +
+      xlab("Graduation Rate") +
+      ggtitle("Graduation Rate by SAT Score") +
+      theme(axis.title.x=element_text(colour="Green",size=20),
+            axis.title.y=element_text(colour="Blue",size=20),
+            axis.text.x=element_text(size=10),
+            axis.text.y=element_text(size=10),
+            legend.title=element_text(size=20),
+            legend.text=element_text(size=10),
+            plot.title=element_text(colour="Red",size=30))
+            
+```
+
