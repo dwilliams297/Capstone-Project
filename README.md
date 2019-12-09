@@ -34,5 +34,5 @@ Education
 9/72 to 5/76		University of Michigan
 			B.S.E. in Aerospace Engineering
 			B.S.E. in Engineering Science
-				B.S.    in Applied Math
+			 B.S.    in Applied Math
 
